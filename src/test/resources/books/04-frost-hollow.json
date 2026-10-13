@@ -1,0 +1,76 @@
+{
+  "title": "Frost Hollow",
+  "author": "Ingrid Vasko",
+  "description": "A snowbound cabin, a dying radio, and a storm that doesn't care if you make it out.",
+  "tags": ["survival", "winter"],
+  "sections": [
+    {
+      "id": 1,
+      "text": "You wake up in a snowbound cabin, a dead radio crackling on the shelf.",
+      "type": "BEGIN",
+      "options": [
+        { "description": "Try to fix the radio", "gotoId": 10 },
+        { "description": "Head outside into the storm", "gotoId": 20 }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The radio sparks to life with a distress beacon location.",
+      "type": "NODE",
+      "options": [
+        { "description": "Follow the beacon coordinates", "gotoId": 30 }
+      ]
+    },
+    {
+      "id": 20,
+      "text": "The storm is fierce. Ice cuts at your exposed skin as you stumble forward.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Push onward despite the cold",
+          "gotoId": 25,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "Frostbite sets into your fingers." }
+        },
+        { "description": "Turn back to the cabin", "gotoId": 70 }
+      ]
+    },
+    {
+      "id": 25,
+      "text": "Your body is shutting down from the cold, but you spot a faint light ahead.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Crawl toward the light",
+          "gotoId": 80,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "The last of your strength gives out as the cold overwhelms you." }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "text": "The coordinates lead you to a hidden supply cache.",
+      "type": "NODE",
+      "options": [
+        { "description": "Take the flare gun and signal for help", "gotoId": 90 }
+      ]
+    },
+    {
+      "id": 70,
+      "text": "Back in the cabin, you find a locked trunk but you have no tool to pry it open. Exhausted, you settle in and wait.",
+      "type": "NODE",
+      "options": []
+    },
+    {
+      "id": 80,
+      "text": "You collapse in the snow, the cabin lights fading from view.",
+      "type": "END",
+      "options": []
+    },
+    {
+      "id": 90,
+      "text": "A rescue helicopter spots your flare. You're saved!",
+      "type": "END",
+      "options": []
+    }
+  ]
+}

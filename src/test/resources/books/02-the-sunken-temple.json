@@ -1,0 +1,97 @@
+{
+  "title": "The Sunken Temple",
+  "author": "Marisol Vance",
+  "description": "Dive into flooded ruins in search of treasure - or just a way out.",
+  "tags": ["exploration", "multiple-endings"],
+  "sections": [
+    {
+      "id": 1,
+      "text": "You dive into the flooded ruins of an ancient temple, air tank hissing.",
+      "type": "BEGIN",
+      "options": [
+        { "description": "Swim toward the glowing chamber", "gotoId": 10 },
+        { "description": "Follow the current down a side tunnel", "gotoId": 20 }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The glowing chamber holds a stone altar humming with energy.",
+      "type": "NODE",
+      "options": [
+        { "description": "Touch the altar", "gotoId": 30 },
+        { "description": "Search the chamber walls instead", "gotoId": 40 }
+      ]
+    },
+    {
+      "id": 20,
+      "text": "The tunnel narrows, but you spot an air pocket ahead.",
+      "type": "NODE",
+      "options": [
+        { "description": "Surface for air", "gotoId": 50 },
+        {
+          "description": "Keep swimming further down",
+          "gotoId": 60,
+          "consequence": { "type": "LOSE_HEALTH", "value": "4", "text": "Your air tank snags on coral, tearing a gash in your side." }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "text": "The altar responds to your touch and a hidden door slides open, revealing a treasure vault.",
+      "type": "NODE",
+      "options": [
+        { "description": "Enter the vault", "gotoId": 70 }
+      ]
+    },
+    {
+      "id": 40,
+      "text": "You find an inscription revealing a way to safely deactivate the altar's wards.",
+      "type": "NODE",
+      "options": [
+        { "description": "Follow the inscription's instructions", "gotoId": 30 }
+      ]
+    },
+    {
+      "id": 50,
+      "text": "You surface into a small air-filled cavern with an old diver's ladder.",
+      "type": "NODE",
+      "options": [
+        { "description": "Climb the ladder to the surface", "gotoId": 80 }
+      ]
+    },
+    {
+      "id": 60,
+      "text": "You find a second, smaller chamber lit by bioluminescent algae.",
+      "type": "NODE",
+      "options": [
+        { "description": "Rest and catch your breath", "gotoId": 90 }
+      ]
+    },
+    {
+      "id": 70,
+      "text": "You emerge with the temple's treasure, legendary among divers for generations.",
+      "type": "END",
+      "options": []
+    },
+    {
+      "id": 80,
+      "text": "You climb out into daylight, alive but empty-handed. A quieter kind of victory.",
+      "type": "END",
+      "options": []
+    },
+    {
+      "id": 90,
+      "text": "The algae chamber has a narrow shaft leading further up.",
+      "type": "NODE",
+      "options": [
+        { "description": "Swim up the shaft", "gotoId": 100 }
+      ]
+    },
+    {
+      "id": 100,
+      "text": "You surface far from where you started, exhausted but alive, with strange photographs of the ruins.",
+      "type": "END",
+      "options": []
+    }
+  ]
+}

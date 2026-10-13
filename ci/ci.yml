@@ -1,0 +1,195 @@
+# Replacement for .github/workflows/ci.yml of the Adventure Book repository:
+# the two baseline jobs are unchanged, a third job `e2e` is added (as the baseline file suggests).
+# Assumes this test project is copied to the folder `tests/` of that repository.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:   # adds a "Run workflow" button in the Actions tab (manual start)
+
+jobs:
+  backend:
+    name: Backend (Maven)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build and test
+        run: ./mvnw -B clean verify
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npx ng build
+
+  contract:
+    name: Contract - breaking API changes (OASDiff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare openapi.yaml with the approved baseline
+        working-directory: tests
+        run: bash scripts/oasdiff.sh ../openapi.yaml
+
+  quality:
+    name: Static analysis (SonarCloud)
+    # the Free plan analyses the main branch only
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Explain a skipped analysis
+        if: ${{ env.SONAR_TOKEN == '' }}
+        run: echo "SONAR_TOKEN secret is not configured - static analysis skipped" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/checkout@v4
+        if: ${{ env.SONAR_TOKEN != '' }}
+        with:
+          fetch-depth: 0   # Sonar needs the full history to know what is "new code"
+      - uses: actions/setup-java@v4
+        if: ${{ env.SONAR_TOKEN != '' }}
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Analyze and wait for the Quality Gate
+        if: ${{ env.SONAR_TOKEN != '' }}
+        working-directory: tests
+        run: >
+          mvn -B -DskipTests verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.0.0.4389:sonar
+          -Dsonar.qualitygate.wait=true
+
+  e2e:
+    name: E2E - API, contract, UI (parallel=${{ matrix.parallel }})
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        parallel: [false, true]   # the same suite must give the same result sequentially and in parallel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Start backend (8080)
+        working-directory: backend
+        run: nohup ./mvnw -B -q spring-boot:run > "$GITHUB_WORKSPACE/backend.log" 2>&1 &
+      - name: Start frontend (4200, proxies /api to 8080)
+        working-directory: frontend
+        run: |
+          npm ci
+          nohup npm start > "$GITHUB_WORKSPACE/frontend.log" 2>&1 &
+      - name: Wait for both
+        run: npx --yes wait-on -t 180000 http://localhost:8080/api/books http://localhost:4200
+
+      - name: Install Playwright browser (system dependencies included)
+        working-directory: tests
+        run: mvn -B -q compile exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+
+      - name: Run the suite (env=ci)
+        working-directory: tests
+        # perf: needs a production build, not the Angular dev server; defect-candidate: run separately below.
+        # coverage.enforce: every API operation needs a happy path and a contract check (sequential run only).
+        run: >
+          mvn -B test -Denv=ci -DexcludedGroups=perf,defect-candidate -Dopenapi.spec=../openapi.yaml
+          -Djunit.jupiter.execution.parallel.enabled=${{ matrix.parallel }}
+          -Dcoverage.enforce=${{ !matrix.parallel }}
+
+      - name: Install k6
+        if: ${{ !matrix.parallel }}
+        uses: grafana/setup-k6-action@v1
+      - name: Performance smoke (k6, API latency thresholds)
+        if: ${{ !matrix.parallel }}
+        working-directory: tests
+        run: k6 run --summary-export=target/k6-summary.json -e BASE_URL=http://localhost:8080 perf/k6/api-latency.js
+
+      - name: Defect candidates (findings, never blocks the build)
+        if: ${{ always() && !matrix.parallel }}
+        continue-on-error: true
+        working-directory: tests
+        run: mvn -B test -Denv=ci -Dgroups=defect-candidate -Dopenapi.spec=../openapi.yaml
+
+      - name: Summary (results, failures, API coverage)
+        if: always()
+        working-directory: tests
+        run: |
+          {
+            echo "### Test results (parallel=${{ matrix.parallel }})"
+            python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          total = failed = errors = skipped = 0
+          problems = []
+          for f in glob.glob("target/surefire-reports/TEST-*.xml"):
+              root = ET.parse(f).getroot()
+              for case in root.iter("testcase"):
+                  total += 1
+                  for kind in ("failure", "error"):
+                      node = case.find(kind)
+                      if node is not None:
+                          problems.append("- `%s.%s`: %s" % (case.get("classname").split(".")[-1], case.get("name"), (node.get("message") or "")[:200]))
+                          failed += kind == "failure"; errors += kind == "error"
+                  if case.find("skipped") is not None:
+                      skipped += 1
+          print("%d tests, %d failed, %d errors, %d skipped\n" % (total, failed, errors, skipped))
+          print("\n".join(problems) if problems else "No failures.")
+          PY
+            echo
+            echo "### API coverage"
+            cat target/api-coverage.md 2>/dev/null || echo "not produced"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build the Allure report
+        if: always()
+        continue-on-error: true
+        working-directory: tests
+        run: mvn -B allure:report
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-evidence-parallel-${{ matrix.parallel }}
+          path: |
+            tests/target/allure-results/
+            tests/target/site/
+            tests/target/surefire-reports/
+            tests/target/traces/
+            tests/target/logs/
+            tests/target/api-coverage.md
+            tests/target/k6-summary.json
+            backend.log
+            frontend.log

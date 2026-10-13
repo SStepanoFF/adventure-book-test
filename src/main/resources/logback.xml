@@ -1,0 +1,24 @@
+<configuration>
+    <property name="LOG_DIR" value="${LOG_DIR:-target/logs}"/>
+    <property name="PATTERN" value="%d{HH:mm:ss.SSS} %-5level [%X{test:-suite}] %logger{0} - %msg%n"/>
+
+    <!-- Console: INFO and above (readable run log) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter"><level>INFO</level></filter>
+        <encoder><pattern>${PATTERN}</pattern></encoder>
+    </appender>
+
+    <!-- File: everything incl. DEBUG (request/response bodies, browser console) -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_DIR}/test-run.log</file>
+        <append>false</append>
+        <encoder><pattern>${PATTERN}</pattern></encoder>
+    </appender>
+
+    <logger name="com.example" level="DEBUG"/>
+    <logger name="com.atlassian" level="WARN"/>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

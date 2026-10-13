@@ -1,0 +1,138 @@
+{
+  "title": "The Wasteland Convoy",
+  "author": "Silas Okafor",
+  "description": "Cross an irradiated wasteland to reach a working radio tower before it's too late.",
+  "tags": ["survival", "long"],
+  "sections": [
+    {
+      "id": 1,
+      "text": "The convoy truck sputters to a stop in the middle of the irradiated wasteland.",
+      "type": "BEGIN",
+      "options": [
+        { "description": "Check the engine", "gotoId": 10 },
+        { "description": "Scout ahead on foot", "gotoId": 20 }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The engine is fried beyond repair. You'll have to continue on foot.",
+      "type": "NODE",
+      "options": [
+        { "description": "Grab supplies before leaving", "gotoId": 30 }
+      ]
+    },
+    {
+      "id": 20,
+      "text": "You spot a raider scout watching from a ridge.",
+      "type": "NODE",
+      "options": [
+        { "description": "Hide and wait", "gotoId": 40 },
+        {
+          "description": "Approach and negotiate",
+          "gotoId": 50,
+          "consequence": { "type": "LOSE_HEALTH", "value": "5", "text": "The raider sucker-punches you before you can speak." }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "text": "With supplies in hand, you set off across the dunes.",
+      "type": "NODE",
+      "options": [
+        { "description": "Head toward the radio tower", "gotoId": 60 }
+      ]
+    },
+    {
+      "id": 40,
+      "text": "The scout eventually moves on. You continue toward the tower.",
+      "type": "NODE",
+      "options": [
+        { "description": "Head toward the radio tower", "gotoId": 60 }
+      ]
+    },
+    {
+      "id": 50,
+      "text": "Bruised, you convince the raider to let you pass.",
+      "type": "NODE",
+      "options": [
+        { "description": "Head toward the radio tower", "gotoId": 60 }
+      ]
+    },
+    {
+      "id": 60,
+      "text": "The radio tower looms ahead, but the ground here is littered with old mines.",
+      "type": "NODE",
+      "options": [
+        { "description": "Pick your way carefully through the minefield", "gotoId": 70 },
+        {
+          "description": "Sprint straight through",
+          "gotoId": 75,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "A mine detonates close enough to shred your leg with shrapnel." }
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "text": "You make it through unharmed and reach the tower's base.",
+      "type": "NODE",
+      "options": [
+        { "description": "Climb the tower", "gotoId": 90 }
+      ]
+    },
+    {
+      "id": 75,
+      "text": "Bleeding and limping, you reach the tower's base.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Climb the tower anyway",
+          "gotoId": 90,
+          "consequence": { "type": "LOSE_HEALTH", "value": "5", "text": "Each rung of the ladder tears at your wound." }
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "text": "At the top, the transmitter is still intact but needs a power cell.",
+      "type": "NODE",
+      "options": [
+        { "description": "Search the nearby ranger station for a power cell", "gotoId": 100 }
+      ]
+    },
+    {
+      "id": 100,
+      "text": "The ranger station is guarded by an old automated turret.",
+      "type": "NODE",
+      "options": [
+        { "description": "Sneak past the turret", "gotoId": 110 },
+        {
+          "description": "Make a run for the door",
+          "gotoId": 115,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "The turret clips you as you dash past." }
+        }
+      ]
+    },
+    {
+      "id": 110,
+      "text": "You slip inside and find a working power cell.",
+      "type": "NODE",
+      "options": [
+        { "description": "Return to the tower and power the transmitter", "gotoId": 130 }
+      ]
+    },
+    {
+      "id": 115,
+      "text": "Wounded but inside, you grab a power cell from the shelf.",
+      "type": "NODE",
+      "options": [
+        { "description": "Return to the tower and power the transmitter", "gotoId": 130 }
+      ]
+    },
+    {
+      "id": 130,
+      "text": "The transmitter roars to life, broadcasting your position to the last free outpost. Rescue is finally on its way.",
+      "type": "END",
+      "options": []
+    }
+  ]
+}

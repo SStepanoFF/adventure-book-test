@@ -1,0 +1,72 @@
+{
+  "title": "The Prisoner",
+  "author": "Daniel El Fuego",
+  "description": "Escape a dark cell before your captors return.",
+  "tags": ["escape", "short"],
+  "sections": [
+    {
+      "id": 1,
+      "text": "You wake up in what seems to be a dark prison cell, on an old wooden bed. Metal bars are preventing you to escape from the room. There is no window.",
+      "type": "BEGIN",
+      "options": [
+        { "description": "Try to open the door", "gotoId": 10 },
+        { "description": "Look under the bed", "gotoId": 20 }
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The door is locked, but as you feel around the lock, you notice something jammed inside it - a rusty key.",
+      "type": "NODE",
+      "options": [
+        { "description": "Pull out the key and use it", "gotoId": 30 }
+      ]
+    },
+    {
+      "id": 20,
+      "text": "You don't see anything, it's too dark.",
+      "type": "NODE",
+      "options": [
+        {
+          "description": "Try to scan the area with your hands",
+          "gotoId": 25,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "As you move your hands left and right under the bed, you cut yourself on a rusty nail." }
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "text": "Your fingers brush against a small metal object - it's a key.",
+      "type": "NODE",
+      "options": [
+        { "description": "Grab the key and try the door", "gotoId": 30 },
+        {
+          "description": "Keep searching under the bed",
+          "gotoId": 35,
+          "consequence": { "type": "LOSE_HEALTH", "value": "6", "text": "You slice your palm open on broken glass hidden in the dark." }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "text": "The door creaks open. A dim corridor stretches ahead, guarded by a sleeping sentry.",
+      "type": "NODE",
+      "options": [
+        { "description": "Sneak past the sentry", "gotoId": 40 }
+      ]
+    },
+    {
+      "id": 35,
+      "text": "Your hand is bleeding badly now. You feel dizzy.",
+      "type": "NODE",
+      "options": [
+        { "description": "Press on and open the door anyway", "gotoId": 30 }
+      ]
+    },
+    {
+      "id": 40,
+      "text": "You slip past silently and escape into the night. Freedom at last!",
+      "type": "END",
+      "options": []
+    }
+  ]
+}

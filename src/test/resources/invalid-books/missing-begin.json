@@ -1,0 +1,20 @@
+{
+  "title": "The Book With No Start",
+  "author": "Test Fixture",
+  "sections": [
+    {
+      "id": 1,
+      "text": "This section has no BEGIN type, so this book is invalid.",
+      "type": "NODE",
+      "options": [
+        { "description": "Continue", "gotoId": 2 }
+      ]
+    },
+    {
+      "id": 2,
+      "text": "The end.",
+      "type": "END",
+      "options": []
+    }
+  ]
+}
