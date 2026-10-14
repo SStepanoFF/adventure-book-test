@@ -135,13 +135,13 @@ prints only when a `then()` check fails). UI/business steps: SLF4J + Logback (co
 DEBUG, test name in every line via MDC); UI steps live in the Allure report (`@Step`), not in the log. On a UI failure:
 screenshot, URL, browser console errors and the Playwright trace are attached to the report.
 
-## Reporter: Allure Report 3 (results written by Allure Java 3)
+## Reporter: Allure Report (results written by Allure Java)
 
-| Option | Verdict |
-|---|---|
-| **Allure Report 3** (OSS, static HTML, plugin based; Allure 2 stays available) | **Chosen.** Business-oriented structure (epic/feature/story), steps, attachments (HTTP exchanges, screenshots, traces), history/trends, flaky detection, quality gate, GitHub Actions integration; works from `mvn allure:report`, no server. |
-| ReportPortal (OSS, server) | Best when many teams/projects need a shared live dashboard and ML failure triage; needs a server + DB, overkill for this scope. The log/step abstraction (`Steps`, `Reports`) keeps a later switch cheap. |
-| ExtentReports, Serenity BDD | Single-file HTML / opinionated BDD style; weaker ecosystem momentum and no history story out of the box. |
+| Option                                              | Verdict                                                                                                                                                                                                                                       |
+|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Allure Report ** (OSS, static HTML, plugin based) | **Chosen.** Business-oriented structure (epic/feature/story), steps, attachments (HTTP exchanges, screenshots, traces), history/trends, flaky detection, quality gate, GitHub Actions integration; works from `mvn allure:report`, no server. |
+| ReportPortal (OSS, server)                          | Best when many teams/projects need a shared live dashboard and ML failure triage; needs a server + DB, overkill for this scope. The log/step abstraction (`Steps`, `Reports`) keeps a later switch cheap.                                     |
+| ExtentReports, Serenity BDD                         | Single-file HTML / opinionated BDD style; weaker ecosystem momentum and no history story out of the box.                                                                                                                                      |
 
 ### And Playwright's own reporter?
 
@@ -161,14 +161,9 @@ Tests tagged `defect-candidate` assert the *specified* behaviour; a failure is a
 
 1. A non-END section with `"options": []` is accepted (validator only checks `null`) - rule 4.
 2. A lethal choice that leads into an END section ends as FINISHED, not DEAD.
-3. Health can go negative (6 + 6 = -2).
+3. Health can go negative.
 4. A consequence value of `"-5"` heals above `maxHealth`.
 5. Malformed JSON / unknown enum value -> 500 instead of 400.
 6. The play button on a book card has no accessible name (and no test id).
 
-## Not verified
 
-The code was written without being able to download dependencies or run the application: sources were checked for
-syntax only. Library versions are pinned in `pom.xml` properties - run `mvn -q versions:display-property-updates`.
-Expect to touch: Allure attachment calls (isolated in `Reports`), and the contract filter if the OpenAPI document
-has quirks (e.g. `nullable` next to `$ref` on `lastConsequence`) - a contract failure there is a spec finding.

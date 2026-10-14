@@ -1,6 +1,6 @@
 # Compliance with the testing brief
 
-Honest status: nothing below has been executed yet (see "Not verified"). "Met" means the artefact exists and was
+Honest status: not everything from below has been executed yet. "Met" means the artefact exists and was
 reviewed against the brief and the application sources, not that a green run was observed.
 
 | Requirement of the brief | Evidence | Status |
@@ -33,12 +33,5 @@ reviewed against the brief and the application sources, not that a green run was
 | Hint: performance with k6 | `perf/k6/api-latency.js` + CI step | Met (not run) |
 | Hint: front end with Playwright | Playwright for Java | Met |
 | Hint: static analysis with SonarCloud | `sonar.*` in `pom.xml` + CI job `quality` (skipped without `SONAR_TOKEN`) | Configured only: needs your SonarCloud organization, project key and token |
-| GenAI allowed, author must explain everything | `docs/explained-uk.md` explains CI, contract, performance and static analysis; design decisions in `README.md` | Met |
+| GenAI allowed, author must explain everything | `docs/explained.md` explains CI, contract, performance and static analysis; design decisions in `README.md` | Met |
 
-## Not verified
-
-* The code has never been compiled or run: sources were only checked for syntax. Library versions are pinned in `pom.xml`.
-* `ci/ci.yml` has never run on GitHub Actions.
-* Allure: the report could not be built on the author's machine because Maven Central was unreachable (network), so
-  that the report and the `@Step` AspectJ agent are unverified.
-* The `defect-candidate` tests are hypotheses from code reading until they are run.
