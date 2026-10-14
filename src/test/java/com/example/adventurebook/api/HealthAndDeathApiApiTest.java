@@ -1,33 +1,33 @@
 package com.example.adventurebook.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.example.adventurebook.api.dto.type.ConsequenceType;
 import com.example.adventurebook.api.dto.response.GameStateResponseDto;
+import com.example.adventurebook.api.dto.type.ConsequenceType;
 import com.example.adventurebook.api.dto.type.GameStatus;
 import com.example.adventurebook.api.payload.BookPayloads;
-import com.example.adventurebook.support.BaseTest;
+import com.example.adventurebook.api.service.BookService;
+import com.example.adventurebook.api.service.GameService;
+import com.example.adventurebook.support.BaseApiTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import com.example.adventurebook.api.service.BookService;
-import com.example.adventurebook.api.service.GameService;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Rule: the player starts with 10 health; when it reaches 0 the adventure is over. */
 @Tag("api")
 @Epic("Play")
 @Feature("Consequences & health")
-class HealthAndDeathApiTest extends BaseTest {
-    private final BookService books = new BookService();
+class HealthAndDeathApiApiTest extends BaseApiTest {
+    private final BookService bookService = new BookService();
 
-    private final GameService games = new GameService();
+    private final GameService gameService = new GameService();
 
 
     private GameStateResponseDto newGame(com.example.adventurebook.api.dto.request.BookRequestDto book) {
-        return games.startOk(books.addOk(book).id());
+        return gameService.startOk(bookService.addOk(book).id());
     }
 
     @Test
@@ -36,7 +36,7 @@ class HealthAndDeathApiTest extends BaseTest {
     void nonLethalDamage() {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(4));
 
-        GameStateResponseDto after = games.chooseOk(game.sessionId(), 1);
+        GameStateResponseDto after = gameService.chooseOk(game.sessionId(), 1);
 
         assertThat(after.health()).isEqualTo(6);
         assertThat(after.status()).isEqualTo(GameStatus.IN_PROGRESS);
@@ -52,7 +52,7 @@ class HealthAndDeathApiTest extends BaseTest {
     void healthReachingZeroKills() {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(10));
 
-        GameStateResponseDto after = games.chooseOk(game.sessionId(), 1);
+        GameStateResponseDto after = gameService.chooseOk(game.sessionId(), 1);
 
         assertThat(after.health()).isZero();
         assertThat(after.status()).isEqualTo(GameStatus.DEAD);
@@ -65,11 +65,11 @@ class HealthAndDeathApiTest extends BaseTest {
     void cumulativeDamageKills() {
         GameStateResponseDto game = newGame(BookPayloads.twoHitsOfSix());
 
-        GameStateResponseDto afterFirst = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto afterFirst = gameService.chooseOk(game.sessionId(), 0);
         assertThat(afterFirst.health()).isEqualTo(4);
         assertThat(afterFirst.status()).isEqualTo(GameStatus.IN_PROGRESS);
 
-        GameStateResponseDto afterSecond = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto afterSecond = gameService.chooseOk(game.sessionId(), 0);
         assertThat(afterSecond.status()).isEqualTo(GameStatus.DEAD);
         assertThat(afterSecond.gameOver()).isTrue();
     }
@@ -79,9 +79,9 @@ class HealthAndDeathApiTest extends BaseTest {
     @DisplayName("A dead player cannot make further choices (409)")
     void deadPlayerCannotContinue() {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(10));
-        games.chooseOk(game.sessionId(), 1);
+        gameService.chooseOk(game.sessionId(), 1);
 
-        games.choose(game.sessionId(), 0).then().statusCode(409);
+        gameService.choose(game.sessionId(), 0).then().statusCode(409);
     }
 
     @Test
@@ -89,9 +89,9 @@ class HealthAndDeathApiTest extends BaseTest {
     @DisplayName("A dead player can restart with full health")
     void deadPlayerCanRestart() {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(10));
-        games.chooseOk(game.sessionId(), 1);
+        gameService.chooseOk(game.sessionId(), 1);
 
-        GameStateResponseDto restarted = games.restartOk(game.sessionId());
+        GameStateResponseDto restarted = gameService.restartOk(game.sessionId());
 
         assertThat(restarted.status()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(restarted.health()).isEqualTo(10);
@@ -110,7 +110,7 @@ class HealthAndDeathApiTest extends BaseTest {
         // GameService.resolveStatus() checks "destination is END" before "health <= 0"
         GameStateResponseDto game = newGame(BookPayloads.lethalChoiceIntoEnding());
 
-        GameStateResponseDto after = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto after = gameService.chooseOk(game.sessionId(), 0);
 
         assertThat(after.health()).isLessThanOrEqualTo(0);
         assertThat(after.status()).isEqualTo(GameStatus.DEAD);
@@ -122,9 +122,9 @@ class HealthAndDeathApiTest extends BaseTest {
     @DisplayName("[candidate] Health never drops below 0")
     void healthIsNeverNegative() {
         GameStateResponseDto game = newGame(BookPayloads.twoHitsOfSix()); // 6 + 6 = 12 > 10
-        games.chooseOk(game.sessionId(), 0);
+        gameService.chooseOk(game.sessionId(), 0);
 
-        GameStateResponseDto after = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto after = gameService.chooseOk(game.sessionId(), 0);
 
         assertThat(after.health()).isGreaterThanOrEqualTo(0);
     }
@@ -136,7 +136,7 @@ class HealthAndDeathApiTest extends BaseTest {
     void healthNeverExceedsMaximum() {
         GameStateResponseDto game = newGame(BookPayloads.negativeDamage());
 
-        GameStateResponseDto after = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto after = gameService.chooseOk(game.sessionId(), 0);
 
         assertThat(after.health()).isLessThanOrEqualTo(after.maxHealth());
     }

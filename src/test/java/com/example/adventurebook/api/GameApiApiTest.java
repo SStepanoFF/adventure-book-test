@@ -1,37 +1,38 @@
 package com.example.adventurebook.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.example.adventurebook.api.dto.response.ErrorResponseDto;
 import com.example.adventurebook.api.dto.request.BookRequestDto;
+import com.example.adventurebook.api.dto.response.ErrorResponseDto;
 import com.example.adventurebook.api.dto.response.GameStateResponseDto;
 import com.example.adventurebook.api.dto.type.GameStatus;
 import com.example.adventurebook.api.dto.type.SectionType;
 import com.example.adventurebook.api.payload.BookPayloads;
-import com.example.adventurebook.support.BaseTest;
+import com.example.adventurebook.api.service.BookService;
+import com.example.adventurebook.api.service.GameService;
+import com.example.adventurebook.support.BaseApiTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import com.example.adventurebook.api.service.BookService;
-import com.example.adventurebook.api.service.GameService;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("api")
 @Epic("Play")
 @Feature("Game API")
-class GameApiTest extends BaseTest {
-    private final BookService books = new BookService();
+class GameApiApiTest extends BaseApiTest {
+    private final BookService bookService = new BookService();
 
-    private final GameService games = new GameService();
+    private final GameService gameService = new GameService();
 
 
     private GameStateResponseDto newGame(BookRequestDto book) {
-        return games.startOk(books.addOk(book).id());
+        return gameService.startOk(bookService.addOk(book).id());
     }
 
     // ------------------------------------------------------------------ start / get
@@ -42,7 +43,7 @@ class GameApiTest extends BaseTest {
     void startGame() {
         BookRequestDto book = BookPayloads.threeStepStory();
 
-        GameStateResponseDto game = games.startOk(books.addOk(book).id());
+        GameStateResponseDto game = gameService.startOk(bookService.addOk(book).id());
 
         assertThat(UUID.fromString(game.sessionId())).isNotNull();
         assertThat(game.bookTitle()).isEqualTo(book.title());
@@ -60,14 +61,14 @@ class GameApiTest extends BaseTest {
     @Story("Start a game")
     @DisplayName("Unknown book -> 404")
     void startGameForUnknownBook() {
-        games.start(999_999L).then().statusCode(404).extract().as(ErrorResponseDto.class);
+        gameService.start(999_999L).then().statusCode(404).extract().as(ErrorResponseDto.class);
     }
 
     @Test
     @Story("Start a game")
     @DisplayName("Missing bookId -> 400")
     void startGameWithoutBookId() {
-        games.startRaw("{}").then().statusCode(400);
+        gameService.startRaw("{}").then().statusCode(400);
     }
 
     @Test
@@ -76,14 +77,14 @@ class GameApiTest extends BaseTest {
     void getGame() {
         GameStateResponseDto started = newGame(BookPayloads.threeStepStory());
 
-        assertThat(games.getOk(started.sessionId())).isEqualTo(started);
+        assertThat(gameService.getOk(started.sessionId())).isEqualTo(started);
     }
 
     @Test
     @Story("Resume")
     @DisplayName("Unknown session -> 404")
     void getUnknownSession() {
-        games.get(UUID.randomUUID().toString()).then().statusCode(404).extract().as(ErrorResponseDto.class);
+        gameService.get(UUID.randomUUID().toString()).then().statusCode(404).extract().as(ErrorResponseDto.class);
     }
 
     // ------------------------------------------------------------------ choices
@@ -94,7 +95,7 @@ class GameApiTest extends BaseTest {
     void chooseAdvances() {
         GameStateResponseDto game = newGame(BookPayloads.threeStepStory());
 
-        GameStateResponseDto next = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto next = gameService.chooseOk(game.sessionId(), 0);
 
         assertThat(next.currentSection().id()).isEqualTo(2);
         assertThat(next.currentSection().text()).isEqualTo(BookPayloads.SECTION_2);
@@ -108,7 +109,7 @@ class GameApiTest extends BaseTest {
     void reachingEndFinishesTheGame() {
         GameStateResponseDto game = newGame(BookPayloads.minimal());
 
-        GameStateResponseDto finished = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto finished = gameService.chooseOk(game.sessionId(), 0);
 
         assertThat(finished.status()).isEqualTo(GameStatus.FINISHED);
         assertThat(finished.gameOver()).isTrue();
@@ -132,15 +133,15 @@ class GameApiTest extends BaseTest {
     void invalidOptionIndex(int index) {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(4));
 
-        games.choose(game.sessionId(), index).then().statusCode(400);
-        assertThat(games.getOk(game.sessionId())).as("state must not change").isEqualTo(game);
+        gameService.choose(game.sessionId(), index).then().statusCode(400);
+        assertThat(gameService.getOk(game.sessionId())).as("state must not change").isEqualTo(game);
     }
 
     @Test
     @Story("Make a choice")
     @DisplayName("Choosing in an unknown session -> 404")
     void chooseInUnknownSession() {
-        games.choose(UUID.randomUUID().toString(), 0).then().statusCode(404);
+        gameService.choose(UUID.randomUUID().toString(), 0).then().statusCode(404);
     }
 
     @Test
@@ -148,11 +149,11 @@ class GameApiTest extends BaseTest {
     @DisplayName("No more choices once the game is finished -> 409, state unchanged")
     void chooseAfterGameEnded() {
         GameStateResponseDto game = newGame(BookPayloads.minimal());
-        GameStateResponseDto finished = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto finished = gameService.chooseOk(game.sessionId(), 0);
 
-        games.choose(game.sessionId(), 0).then().statusCode(409).extract().as(ErrorResponseDto.class);
+        gameService.choose(game.sessionId(), 0).then().statusCode(409).extract().as(ErrorResponseDto.class);
 
-        assertThat(games.getOk(game.sessionId())).isEqualTo(finished);
+        assertThat(gameService.getOk(game.sessionId())).isEqualTo(finished);
     }
 
     // ------------------------------------------------------------------ save & resume
@@ -162,19 +163,19 @@ class GameApiTest extends BaseTest {
     @DisplayName("Save returns the persisted state and progress can be resumed")
     void saveAndResume() {
         GameStateResponseDto game = newGame(BookPayloads.threeStepStory());
-        GameStateResponseDto progressed = games.chooseOk(game.sessionId(), 0);
+        GameStateResponseDto progressed = gameService.chooseOk(game.sessionId(), 0);
 
-        GameStateResponseDto saved = games.saveOk(game.sessionId());
+        GameStateResponseDto saved = gameService.saveOk(game.sessionId());
 
         assertThat(saved).isEqualTo(progressed);
-        assertThat(games.getOk(game.sessionId())).isEqualTo(progressed);
+        assertThat(gameService.getOk(game.sessionId())).isEqualTo(progressed);
     }
 
     @Test
     @Story("Save & resume")
     @DisplayName("Saving an unknown session -> 404")
     void saveUnknownSession() {
-        games.save(UUID.randomUUID().toString()).then().statusCode(404);
+        gameService.save(UUID.randomUUID().toString()).then().statusCode(404);
     }
 
     // ------------------------------------------------------------------ restart
@@ -184,9 +185,9 @@ class GameApiTest extends BaseTest {
     @DisplayName("Restart of a game in progress goes back to the beginning")
     void restartInProgress() {
         GameStateResponseDto game = newGame(BookPayloads.withRiskyChoice(4));
-        games.chooseOk(game.sessionId(), 1);
+        gameService.chooseOk(game.sessionId(), 1);
 
-        GameStateResponseDto restarted = games.restartOk(game.sessionId());
+        GameStateResponseDto restarted = gameService.restartOk(game.sessionId());
 
         assertThat(restarted.currentSection().id()).isEqualTo(1);
         assertThat(restarted.health()).isEqualTo(10);
@@ -200,19 +201,19 @@ class GameApiTest extends BaseTest {
     @DisplayName("A finished game can be restarted and played again")
     void restartFinishedGame() {
         GameStateResponseDto game = newGame(BookPayloads.minimal());
-        games.chooseOk(game.sessionId(), 0);
+        gameService.chooseOk(game.sessionId(), 0);
 
-        GameStateResponseDto restarted = games.restartOk(game.sessionId());
+        GameStateResponseDto restarted = gameService.restartOk(game.sessionId());
 
         assertThat(restarted.status()).isEqualTo(GameStatus.IN_PROGRESS);
         assertThat(restarted.gameOver()).isFalse();
-        games.chooseOk(game.sessionId(), 0); // playable again
+        gameService.chooseOk(game.sessionId(), 0); // playable again
     }
 
     @Test
     @Story("Restart")
     @DisplayName("Restarting an unknown session -> 404")
     void restartUnknownSession() {
-        games.restart(UUID.randomUUID().toString()).then().statusCode(404);
+        gameService.restart(UUID.randomUUID().toString()).then().statusCode(404);
     }
 }

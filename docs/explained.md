@@ -167,8 +167,9 @@ requests and responses, the status codes.
 - How it works: `ApiClient.withContract()` adds a filter from the swagger-request-validator library. The filter sees every
   request and every response that passes through and compares them with `openapi.yaml`. A mismatch = an exception = a
   red test.
-- **Only in these tests?** Yes, on purpose: `ContractApiTest` (one test per operation and response type: 200, 201, 400,
-  404, 409) and `TestSupportApiTest`. Any other test can switch the check on too:
+- **Only in these tests?** Yes, on purpose: `ContractApiApiTest` (one test per operation and response type: 200, 201,
+  400,
+  404, 409) and `TestSupportApiApiTest`. Any other test can switch the check on too:
   `new BookService(ApiClient.withContract())`. We do not do it everywhere because negative tests deliberately send
   "wrong" requests (broken JSON) and the contract would reject them.
 - **What is checked:** whether such an operation exists (method + address template); required path and query parameters
@@ -235,7 +236,8 @@ with code 99. Or stop the backend: the `http_req_failed` threshold fails.
 
 ## 5. Page time in Playwright
 
-`PageLoadPerfTest` measures from `page.navigate(...)` to the moment the page shows its data (the first book card or the
+`PageLoadPerfApiTest` measures from `page.navigate(...)` to the moment the page shows its data (the first book card or
+the
 section text), so it includes the network, JavaScript execution and rendering. A warm-up pass is not counted; after it the
 **median** of `perf.runs` (5) measurements is taken, because a single measurement is noise. The budget is
 `perf.page-ready-budget-ms` (500). The test is `@Isolated`: it never runs at the same time as other tests. Run:

@@ -1,37 +1,38 @@
 package com.example.adventurebook.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.request.BookRequestDto;
+import com.example.adventurebook.api.dto.response.BookResponseDto;
 import com.example.adventurebook.api.dto.type.GameStatus;
 import com.example.adventurebook.api.payload.BookPayloads;
-import com.example.adventurebook.api.dto.response.BookResponseDto;
 import com.example.adventurebook.api.service.BookService;
 import com.example.adventurebook.api.service.GameService;
 import com.example.adventurebook.support.BookWalker;
 import com.example.adventurebook.support.SeedBooks;
-import com.example.adventurebook.support.UiTest;
+import com.example.adventurebook.support.UiApiTest;
 import com.example.adventurebook.ui.asserts.GameAsserts;
 import com.example.adventurebook.ui.steps.GameSteps;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Playing through the UI only; the books are created through the API so every scenario is deterministic. */
 @Tag("ui")
 @Epic("Play")
 @Feature("Game page")
-class GameplayUiTest extends UiTest {
+class GameplayUiApiTest extends UiApiTest {
 
-    private final BookService books = new BookService();
-    private final GameService games = new GameService();
+    private final BookService bookService = new BookService();
+    private final GameService gameService = new GameService();
 
     private GameSteps startInUi(BookRequestDto book) {
-        books.addOk(book);
+        bookService.addOk(book);
         return librarySteps().open().search(book.title()).startBook(book.title());
     }
 
@@ -60,9 +61,9 @@ class GameplayUiTest extends UiTest {
     @Story("Play to the end")
     @DisplayName("A REAL built-in book is played to its ending in the browser (path found through the API)")
     void builtInBookIsPlayedToTheEnd() {
-        BookResponseDto book = books.listOk(SeedBooks.PRISONER, null).stream()
+        BookResponseDto book = bookService.listOk(SeedBooks.PRISONER, null).stream()
                 .filter(candidate -> candidate.title().equals(SeedBooks.PRISONER)).findFirst().orElseThrow();
-        List<Integer> path = new BookWalker(games).findPathToEnding(book.id());
+        List<Integer> path = new BookWalker(gameService).findPathToEnding(book.id());
 
         GameSteps game = librarySteps().open().search(SeedBooks.PRISONER).startBook(SeedBooks.PRISONER);
         path.forEach(game::chooseAndWait);

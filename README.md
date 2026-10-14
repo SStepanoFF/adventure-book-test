@@ -30,7 +30,8 @@ All run parameters, tags and config keys: `docs/parameters.md`.
   `api/dto/request` / `api/dto/response` (suffix `Dto`) and a body builder in `api/payload` if needed.
 * **A new page:** `<Name>Page` (locators only, `@Getter`), `<Name>Steps` (actions, `@Step`), `<Name>Asserts` (checks, `@Step`).
   A missing `data-testid` is a CSS/role fallback inside the page object, with a comment.
-* **A new test:** extend `BaseTest` (API) or `UiTest` (browser), declare only the services you use, create your own data
+* **A new test:** extend `BaseApiTest` (API) or `UiApiTest` (browser), declare only the services you use, create your
+  own data
   (`Unique`, `BookBuilder`), tag it (`api`, `ui`, `e2e`, `contract`, `perf`).
 * **Run:** `mvn test -Dgroups=api`, `-Denv=staging`, `-Dui.headless=false`; other tools: `bash scripts/oasdiff.sh`, `k6 run perf/k6/api-latency.js`,
   Sonar (`docs/explained-uk.md`).
@@ -112,8 +113,8 @@ use event-driven waits.
 book/session, so tests do not depend on order or on each other and can run in parallel. The only test that calls
 reset is `@Isolated`.
 
-**API + UI together.** Preconditions and verification through the API, the journey through the UI
-(`HybridE2eTest`). The app has no login: the equivalent is the game *session* (created via API, opened directly
+**API + UI together.** Preconditions and verification through the API, the journey through the UI (`HybridE2EApiTest`).
+The app has no login: the equivalent is the game *session* (created via API, opened directly
 in the browser) and browser state pre-set with `seedLocalStorage`. If authentication is added, a stored login
 state belongs in `UiSession`.
 
@@ -123,11 +124,11 @@ objective "every endpoint: one happy path and one contract test" as a report ins
 `-Dcoverage.enforce=true` fails the run (use it for the full CI run, not for filtered runs).
 
 **Parallel execution.** `-Djunit.jupiter.execution.parallel.enabled=true` runs test *classes* concurrently (4 by
-default); the methods of one class run on one thread (`@Execution(SAME_THREAD)` on `UiTest`). Playwright is driven
+default); the methods of one class run on one thread (`@Execution(SAME_THREAD)` on `UiApiTest`). Playwright is driven
 by the thread that calls it, so every thread creates AND closes its own `Playwright`/`Browser`
 (`BrowserManager.closeThreadBrowser()`, called by `TafExtension.afterAll`; `ui.browser-scope=auto|class|run`).
 Safety nets: `BrowserThreadingTest` (several browsers open at once, no mixing, closed by their owners),
-`ConcurrencyApiTest` (the backend under concurrent load), `@Isolated` on tests that must run alone (reset, perf),
+`ConcurrencyApiApiTest` (the backend under concurrent load), `@Isolated` on tests that must run alone (reset, perf),
 unique data per test, and a CI matrix that runs the suite both sequentially and in parallel.
 
 **Logging.** API: REST Assured's own standard request/response log (`-Dapi.log=all|failures|none`, default `all`; `failures`

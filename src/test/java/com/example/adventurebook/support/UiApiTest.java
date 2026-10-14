@@ -21,7 +21,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
  * cheap wrappers around the current page, created on demand.
  */
 @Execution(ExecutionMode.SAME_THREAD) // a browser belongs to one thread: never spread the methods of a UI class
-public abstract class UiTest extends BaseTest {
+public abstract class UiApiTest extends BaseUiTest {
 
     /** Override (or call {@link #openBrowser}) to change the emulated device. */
     protected DeviceProfile defaultProfile() {

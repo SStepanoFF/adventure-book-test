@@ -1,14 +1,12 @@
 package com.example.adventurebook.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.response.GameStateResponseDto;
 import com.example.adventurebook.api.payload.BookPayloads;
 import com.example.adventurebook.api.service.BookService;
 import com.example.adventurebook.api.service.GameService;
 import com.example.adventurebook.config.TafConfig;
 import com.example.adventurebook.perf.PerformanceAssert;
-import com.example.adventurebook.support.UiTest;
+import com.example.adventurebook.support.UiApiTest;
 import com.example.adventurebook.ui.steps.GameSteps;
 import com.example.adventurebook.ui.steps.LibrarySteps;
 import io.qameta.allure.Epic;
@@ -17,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Page loading must take 500 ms at most (config: perf.page-ready-budget-ms). "Loaded" means the DATA is rendered
@@ -28,10 +28,10 @@ import org.junit.jupiter.api.parallel.Isolated;
 @Tag("perf")
 @Epic("Performance")
 @Feature("Page loading")
-class PageLoadPerfTest extends UiTest {
+class PageLoadPerfApiTest extends UiApiTest {
 
-    private final BookService books = new BookService();
-    private final GameService games = new GameService();
+    private final BookService bookService = new BookService();
+    private final GameService gameService = new GameService();
     private final TafConfig config = TafConfig.get();
 
     @Test
@@ -48,7 +48,7 @@ class PageLoadPerfTest extends UiTest {
     @Test
     @DisplayName("Game page: section text visible within the budget")
     void gamePageLoadsWithinBudget() {
-        GameStateResponseDto session = games.startOk(books.addOk(BookPayloads.threeStepStory()).id());
+        GameStateResponseDto session = gameService.startOk(bookService.addOk(BookPayloads.threeStepStory()).id());
         GameSteps game = gameSteps(session.sessionId());
         game.openAndMeasureContentMs(); // warm-up
 
@@ -60,8 +60,8 @@ class PageLoadPerfTest extends UiTest {
     @Test
     @DisplayName("API: listing books answers within the budget")
     void listBooksApiWithinBudget() {
-        books.list(); // warm-up
-        double median = PerformanceAssert.median(config.perfRuns(), () -> (double) books.list().time());
+        bookService.list(); // warm-up
+        double median = PerformanceAssert.median(config.perfRuns(), () -> (double) bookService.list().time());
 
         assertThat(median).as("GET /api/books median").isLessThanOrEqualTo(config.pageReadyBudgetMs());
     }

@@ -24,7 +24,7 @@
         <playwright.version>1.59.0</playwright.version>
         <swagger-validator.version>2.43.0</swagger-validator.version>
         <allure.version>2.35.5</allure.version>
-        <allure-maven.version>2.16.0</allure-maven.version>
+        <allure-maven.version>2.18.0</allure-maven.version>
         <jackson.version>2.18.2</jackson.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>

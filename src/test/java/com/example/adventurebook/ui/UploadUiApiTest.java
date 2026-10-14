@@ -1,12 +1,10 @@
 package com.example.adventurebook.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.request.BookRequestDto;
 import com.example.adventurebook.api.payload.BookPayloads;
 import com.example.adventurebook.api.service.BookService;
 import com.example.adventurebook.support.InvalidBookCases.Case;
-import com.example.adventurebook.support.UiTest;
+import com.example.adventurebook.support.UiApiTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
@@ -16,12 +14,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @Tag("ui")
 @Epic("Add a book")
 @Feature("Upload page")
-class UploadUiTest extends UiTest {
+class UploadUiApiTest extends UiApiTest {
 
-    private final BookService books = new BookService();
+    private final BookService bookService = new BookService();
 
     @Test
     @Story("Add a book")
@@ -51,7 +51,7 @@ class UploadUiTest extends UiTest {
         uploadSteps().open().submitExpectingError(invalid.book());
 
         uploadAsserts().shouldShowValidationError(invalid.errorFragment());
-        assertThat(books.listOk(invalid.book().title(), null))
+        assertThat(bookService.listOk(invalid.book().title(), null))
                 .as("rejected book must not be in the catalog").isEmpty();
     }
 }

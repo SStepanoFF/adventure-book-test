@@ -1,13 +1,11 @@
 package com.example.adventurebook.ui;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.request.BookRequestDto;
 import com.example.adventurebook.api.payload.BookPayloads;
 import com.example.adventurebook.api.service.BookService;
 import com.example.adventurebook.data.Unique;
 import com.example.adventurebook.support.SeedBooks;
-import com.example.adventurebook.support.UiTest;
+import com.example.adventurebook.support.UiApiTest;
 import com.example.adventurebook.ui.steps.LibrarySteps;
 import com.example.adventurebook.ui.steps.LibrarySteps.BookCardInfo;
 import com.microsoft.playwright.Locator;
@@ -15,18 +13,21 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
-import java.util.List;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 @Tag("ui")
 @Epic("Library")
 @Feature("Library page")
-class LibraryUiTest extends UiTest {
+class LibraryUiApiTest extends UiApiTest {
 
-    private final BookService books = new BookService();
+    private final BookService bookService = new BookService();
 
     @Test
     @Story("List books")
@@ -89,7 +90,7 @@ class LibraryUiTest extends UiTest {
     @DisplayName("A book added through the API appears in the library (hybrid precondition)")
     void bookAddedThroughApiIsListed() {
         BookRequestDto book = BookPayloads.minimal();
-        books.addOk(book);
+        bookService.addOk(book);
 
         librarySteps().open().search(book.title());
 

@@ -1,21 +1,21 @@
 package com.example.adventurebook.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.response.BookResponseDto;
 import com.example.adventurebook.api.dto.response.GameStateResponseDto;
 import com.example.adventurebook.api.payload.BookPayloads;
 import com.example.adventurebook.api.service.BookService;
 import com.example.adventurebook.api.service.GameService;
-import com.example.adventurebook.api.ApiClient;
-import com.example.adventurebook.support.BaseTest;
+import com.example.adventurebook.support.BaseApiTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Contract tests: the same calls as the functional tests, but every request and response is validated against
@@ -26,19 +26,19 @@ import org.junit.jupiter.api.Test;
 @Tag("contract")
 @Epic("API contract")
 @Feature("OpenAPI conformance")
-class ContractApiTest extends BaseTest {
-    private final BookService books = new BookService();
+class ContractApiApiTest extends BaseApiTest {
+    private final BookService bookService = new BookService();
 
-    private final GameService games = new GameService();
+    private final GameService gameService = new GameService();
 
 
-    private final ApiClient contractApi = ApiClient.withContract();
-    private final BookService contractBooks = new BookService(contractApi);
-    private final GameService contractGames = new GameService(contractApi);
+    private final ApiClient apiClient = ApiClient.withContract();
+    private final BookService contractBooks = new BookService(apiClient);
+    private final GameService contractGames = new GameService(apiClient);
 
     private GameStateResponseDto startedGame() {
-        BookResponseDto book = books.addOk(BookPayloads.withRiskyChoice(4));
-        return games.startOk(book.id());
+        BookResponseDto book = bookService.addOk(BookPayloads.withRiskyChoice(4));
+        return gameService.startOk(book.id());
     }
 
     // ---------------------------------------------------------------- books
@@ -61,7 +61,7 @@ class ContractApiTest extends BaseTest {
     @Story("GET /api/books/{bookId}")
     @DisplayName("200 and 404 conform to the contract")
     void getBook() {
-        BookResponseDto book = books.addOk(BookPayloads.minimal());
+        BookResponseDto book = bookService.addOk(BookPayloads.minimal());
         contractBooks.get(book.id()).then().statusCode(200);
         contractBooks.get(999_999).then().statusCode(404);
     }
@@ -86,7 +86,7 @@ class ContractApiTest extends BaseTest {
     @Story("POST /api/games")
     @DisplayName("201 and 404 conform to the contract")
     void startGame() {
-        BookResponseDto book = books.addOk(BookPayloads.minimal());
+        BookResponseDto book = bookService.addOk(BookPayloads.minimal());
         contractGames.start(book.id()).then().statusCode(201);
         contractGames.start(999_999L).then().statusCode(404);
     }
@@ -114,7 +114,7 @@ class ContractApiTest extends BaseTest {
     @Story("POST /api/games/{sessionId}/choices/{optionIndex}")
     @DisplayName("409 (game already ended) conforms to the contract")
     void chooseAfterEnd() {
-        GameStateResponseDto game = games.startOk(books.addOk(BookPayloads.minimal()).id());
+        GameStateResponseDto game = gameService.startOk(bookService.addOk(BookPayloads.minimal()).id());
         contractGames.choose(game.sessionId(), 0).then().statusCode(200);
         contractGames.choose(game.sessionId(), 0).then().statusCode(409);
     }

@@ -1,14 +1,18 @@
 package com.example.adventurebook.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.example.adventurebook.api.dto.request.BookRequestDto;
 import com.example.adventurebook.api.dto.response.BookResponseDto;
 import com.example.adventurebook.api.dto.response.GameStateResponseDto;
 import com.example.adventurebook.api.payload.BookPayloads;
-import com.example.adventurebook.support.BaseTest;
+import com.example.adventurebook.api.service.BookService;
+import com.example.adventurebook.api.service.GameService;
+import com.example.adventurebook.support.BaseApiTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -17,11 +21,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import com.example.adventurebook.api.service.BookService;
-import com.example.adventurebook.api.service.GameService;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A parallel test run hits the backend concurrently, so the backend has to survive that. These tests check it
@@ -31,10 +32,10 @@ import com.example.adventurebook.api.service.GameService;
 @Tag("concurrency")
 @Epic("Robustness")
 @Feature("Concurrent access")
-class ConcurrencyApiTest extends BaseTest {
-    private final BookService books = new BookService();
+class ConcurrencyApiApiTest extends BaseApiTest {
+    private final BookService bookService = new BookService();
 
-    private final GameService games = new GameService();
+    private final GameService gameService = new GameService();
 
 
     private static final int THREADS = 8;
@@ -45,23 +46,23 @@ class ConcurrencyApiTest extends BaseTest {
     void concurrentUploads() throws Exception {
         List<BookRequestDto> inputs = IntStream.range(0, COUNT).mapToObj(i -> BookPayloads.minimal()).toList();
 
-        List<BookResponseDto> created = inParallel(inputs, books::addOk);
+        List<BookResponseDto> created = inParallel(inputs, bookService::addOk);
 
         assertThat(created).extracting(BookResponseDto::id).doesNotHaveDuplicates();
-        assertThat(books.listOk()).extracting(BookResponseDto::title)
+        assertThat(bookService.listOk()).extracting(BookResponseDto::title)
                 .containsAll(inputs.stream().map(BookRequestDto::title).toList());
     }
 
     @Test
     @DisplayName("Concurrent sessions of one book stay independent")
     void concurrentSessionsAreIndependent() throws Exception {
-        BookResponseDto book = books.addOk(BookPayloads.withRiskyChoice(4));
+        BookResponseDto book = bookService.addOk(BookPayloads.withRiskyChoice(4));
         List<Integer> numbers = IntStream.range(0, COUNT).boxed().toList();
 
-        List<GameStateResponseDto> started = inParallel(numbers, i -> games.startOk(book.id()));
+        List<GameStateResponseDto> started = inParallel(numbers, i -> gameService.startOk(book.id()));
         assertThat(started).extracting(GameStateResponseDto::sessionId).doesNotHaveDuplicates();
 
-        List<GameStateResponseDto> afterHit = inParallel(started, s -> games.chooseOk(s.sessionId(), 1));
+        List<GameStateResponseDto> afterHit = inParallel(started, s -> gameService.chooseOk(s.sessionId(), 1));
         assertThat(afterHit).allSatisfy(state -> {
             assertThat(state.health()).isEqualTo(6);
             assertThat(state.currentSection().id()).isEqualTo(2);

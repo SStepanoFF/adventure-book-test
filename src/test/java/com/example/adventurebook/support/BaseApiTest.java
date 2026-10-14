@@ -9,5 +9,5 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * {@code private final BookService books = new BookService();}
  */
 @ExtendWith(TafExtension.class)
-public abstract class BaseTest {
+public abstract class BaseApiTest {
 }
