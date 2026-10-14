@@ -27,6 +27,7 @@ public class BookService {
         this(ApiClient.standard());
     }
 
+    @Step("Get list of books with search='{search}' and tag='{tag}'")
     public Response list(String search, String tag) {
         RequestSpecification request = client.request();
         if (search != null) {
@@ -38,38 +39,45 @@ public class BookService {
         return request.get(BOOKS);
     }
 
+    @Step("Get list of all books")
     public Response list() {
         return list(null, null);
     }
 
-    @Step("Get Book by Id='{bookId}'")
+    @Step("Get book by ID='{bookId}'")
     public Response get(Object bookId) {
         return client.request().pathParam("bookId", bookId).get(BOOK);
     }
 
+    @Step("Add new book with title='{book.title}'")
     public Response add(BookRequestDto book) {
         return client.request().body(book).post(BOOKS);
     }
 
     /** Raw JSON body, for malformed-payload tests. */
+    @Step("Add book with raw payload")
     public Response addRaw(String json) {
         return client.request().body(json).post(BOOKS);
     }
 
     // ---------- success variants: assert the status, return the DTO ----------
 
+    @Step("Get list of books (expecting 200 OK) with search='{search}' and tag='{tag}'")
     public List<BookResponseDto> listOk(String search, String tag) {
         return Arrays.asList(list(search, tag).then().statusCode(200).extract().as(BookResponseDto[].class));
     }
 
+    @Step("Get list of all books (expecting 200 OK)")
     public List<BookResponseDto> listOk() {
         return listOk(null, null);
     }
 
+    @Step("Get book by ID='{bookId}' (expecting 200 OK)")
     public BookResponseDto getOk(Object bookId) {
         return get(bookId).then().statusCode(200).extract().as(BookResponseDto.class);
     }
 
+    @Step("Add new book with title='{book.title}' (expecting 201 Created)")
     public BookResponseDto addOk(BookRequestDto book) {
         return add(book).then().statusCode(201).extract().as(BookResponseDto.class);
     }

@@ -33,7 +33,7 @@ reviewed against the brief and the application sources, not that a green run was
 | Hint: performance with k6 | `perf/k6/api-latency.js` + CI step | Met (not run) |
 | Hint: front end with Playwright | Playwright for Java | Met |
 | Hint: static analysis with SonarCloud | `sonar.*` in `pom.xml` + CI job `quality` (skipped without `SONAR_TOKEN`) | Configured only: needs your SonarCloud organization, project key and token |
-| GenAI allowed, author must explain everything | `docs/explained-uk.md` explains CI, contract, performance and static analysis; design decisions in `README.md` | Met |
+| GenAI allowed, author must explain everything | `docs/explained.md` explains CI, contract, performance and static analysis; design decisions in `README.md` | Met |
 
 ## Not verified
 
